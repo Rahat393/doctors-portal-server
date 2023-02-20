@@ -49,6 +49,9 @@ async function run() {
     const usersCollection = client
       .db("doctors-portal2")
       .collection("users");
+    const doctorsCollection = client
+      .db("doctors-portal2")
+      .collection("doctors");
     const paymentsCollection = client
       .db("doctors-portal2")
       .collection("payment");
@@ -177,8 +180,27 @@ async function run() {
       res.send(booking)
     })
 
-    // payment getway
+    // doctor info
+    app.post('/doctors', async(req, res) => {
+        const doctor = req.body;
+        const result = await doctorsCollection.insertOne(doctor);
+        res.send(result);
+    });
 
+    app.get('/doctors', async(req, res) => {
+      const query = {};
+      const doctors = await doctorsCollection.find(query).toArray();
+      res.send(doctors)
+    });
+
+    app.delete('/doctors/:id', async(req, res) => {
+      const id = req.params.id;
+      const filter = {_id : new  ObjectId(id)}
+      const result = await doctorsCollection.deleteOne(filter);
+      res.send(result)
+    })
+
+    // payment getway
     app.post('/create-payment-intent', async(req, res) => {
       const booking = req.body;
       const price = booking.price;
