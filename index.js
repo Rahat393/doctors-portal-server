@@ -21,20 +21,20 @@ const client = new MongoClient(uri, {
   serverApi: ServerApiVersion.v1,
 });
 
-function verifyJWT(req, res, next){
-  const authHeader = req.headers.authorization;
-  if(!authHeader){
-    res.status(401).send('unauthorized access')
-  }
-  const token = authHeader.split(' ')[1];
-  jwt.verify(token, process.env.ACCESS_TOKEN, function(err, decoded){
-    if(err){
-      res.status(403).send({message: 'forbidden access'})
-    }
-    req.decoded = decoded;
-    next()
-  })
-}
+// function verifyJWT(req, res, next){
+//   const authHeader = req.headers.authorization;
+//   if(!authHeader){
+//     res.status(401).send('unauthorized access')
+//   }
+//   const token = authHeader.split(' ')[1];
+//   jwt.verify(token, process.env.ACCESS_TOKEN, function(err, decoded){
+//     if(err){
+//       res.status(403).send({message: 'forbidden access'})
+//     }
+//     req.decoded = decoded;
+//     next()
+//   })
+// }
 
 //  console.log(uri);
 
@@ -89,13 +89,20 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/bookings", verifyJWT, async(req, res) => {
-      const email = req.query.email;
-      const decodedEmail = req.decoded.email;
-      if(email !==  decodedEmail){
-        return res.status(403).send({message: 'forbidden access'})
+    app.get("/bookings",   async(req, res) => {
+      // const email = req.query.email;
+      // const decodedEmail = req.decoded.email;
+      // if(email !==  decodedEmail){
+      //   return res.status(403).send({message: 'forbidden access'})
+      // }
+      // const query = {  email}
+
+      let query = {};
+      if (req.query.email){
+        query = {
+          email : req.query.email
+        }
       }
-      const query = {email: email}
       const bookings = await bookingsCollection.find(query).toArray()
       res.send(bookings)
     })
@@ -124,7 +131,7 @@ async function run() {
       res.send(result)
     })
 
-    app.put('/users/admin/:id', verifyJWT, async(req, res) => {
+    app.put('/users/admin/:id',  async(req, res) => {
       const decodedEmail =req.decoded.email;
       const query = {email : decodedEmail};
       const user = await usersCollection.findOne(query);
@@ -134,7 +141,7 @@ async function run() {
       }
 
       const id = req.params.id;
-      const filter = {_id : ObjectId(id)}
+      const filter = {_id : new ObjectId(id)}
       const options = {upsert: true}
       const updateDoc = {
         $set: {
@@ -175,7 +182,7 @@ async function run() {
 
     app.get('/bookings/:id', async (req, res) => {
       const id = req.params.id;
-      const query = {_id: ObjectId(id)}
+      const query = {_id: new ObjectId(id)}
       const booking = await bookingsCollection.findOne(query);
       res.send(booking)
     })
@@ -222,7 +229,7 @@ async function run() {
       const payment = req.body;
       const result = await paymentsCollection.insertOne(payment);
       const id = payment.bookingId
-      const filter = {_id: ObjectId(id)}
+      const filter = {_id: new ObjectId(id)}
       const updatedDoc = {
           $set: {
               paid: true,
